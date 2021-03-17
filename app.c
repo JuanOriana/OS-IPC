@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 
 int main(int argc, char const *argv[])
 {
@@ -9,7 +8,7 @@ int main(int argc, char const *argv[])
         fprintf(stderr, "Usage: %s <files>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-//
+    //
 
     // DIR *pDir = opendir(argv[1]);
     // if (pDir == NULL)
