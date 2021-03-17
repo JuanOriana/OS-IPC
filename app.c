@@ -9,13 +9,13 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    DIR *pDir = opendir(argv[1]);
-    if (pDir == NULL)
+    FILE *fDir = fopen(argv[1], "w");
+    if (fDir == NULL)
     {
         fprintf(stderr, "Can not open directory %s\n", argv[1]);
         exit(EXIT_FAILURE);
     }
 
-    closedir(pDir);
+    fclose(fDir);
     return 0;
 }
