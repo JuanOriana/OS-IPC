@@ -6,6 +6,8 @@
 #define CHILD_COUNT 3
 #define READ_END 0
 #define WRITE_END 1
+#define SLAVE_TO_MASTER 0
+#define MASTER_TO_SLAVE 1
 
 int main(int argc, char const *argv[])
 {
@@ -17,18 +19,24 @@ int main(int argc, char const *argv[])
 
     int fileCount = argc - 1;
     pid_t childIDs[CHILD_COUNT];
-    int pipes[CHILD_COUNT][2];
+    // 2 pipes per child
+    int pipes[CHILD_COUNT][2][2];
 
+    //Pipe inits
     for (int i = 0; i < CHILD_COUNT; i++)
     {
-        if (pipe(pipes[i]) < 0)
+        for (int j = 0; j < 2; j++)
         {
-            perror("Unsuccesful pipe");
-            abort();
+            if (pipe(pipes[i][j]) < 0)
+            {
+                perror("Unsuccesful pipe");
+                abort();
+            }
         }
     }
 
-    for (i = 0; i < CHILD_COUNT; i++)
+    // Fork inits
+    for (int i = 0; i < CHILD_COUNT; i++)
     {
         if ((childIDs[i] = fork()) < 0)
         {
@@ -41,7 +49,8 @@ int main(int argc, char const *argv[])
         }
     }
 
-    for (i = 0; i < CHILD_COUNT; i++)
+    // Wait to end
+    for (int i = 0; i < CHILD_COUNT; i++)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {
