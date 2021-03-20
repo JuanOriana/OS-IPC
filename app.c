@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define CHILD_COUNT 3
 #define READ_END 0
@@ -21,6 +22,7 @@ int main(int argc, char const *argv[])
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
+    char* const* execParam = NULL;
 
     //Pipe inits
     for (int i = 0; i < CHILD_COUNT; i++)
@@ -45,7 +47,9 @@ int main(int argc, char const *argv[])
         }
         else if (childIDs[i] == 0)
         {
-            execv("./slave", NULL);
+            execv("./slave", execParam);
+            perror("exec");
+            exit(EXIT_FAILURE);
         }
     }
 
