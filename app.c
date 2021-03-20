@@ -22,7 +22,7 @@ int main(int argc, char const *argv[])
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
-    char* const* execParam = NULL;
+    char *const *execParam = NULL;
 
     //Pipe inits
     for (int i = 0; i < CHILD_COUNT; i++)
@@ -47,9 +47,26 @@ int main(int argc, char const *argv[])
         }
         else if (childIDs[i] == 0)
         {
+            dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
+            dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
+
+            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
+            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
+            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
+            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+
             execv("./slave", execParam);
             perror("exec");
             exit(EXIT_FAILURE);
+        }
+        else
+        {
+            dup2(pipes[i][SLAVE_TO_MASTER][READ_END], STDIN_FILENO);
+
+            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
+            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
+            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
+            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
         }
     }
 
