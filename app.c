@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -19,6 +20,7 @@ int main(int argc, char const *argv[])
     }
 
     int fileCount = argc - 1;
+    int currIdx = 1;
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
@@ -32,7 +34,7 @@ int main(int argc, char const *argv[])
             if (pipe(pipes[i][j]) < 0)
             {
                 perror("Unsuccesful pipe");
-                abort();
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -43,11 +45,11 @@ int main(int argc, char const *argv[])
         if ((childIDs[i] = fork()) < 0)
         {
             perror("Unsuccesful fork");
-            abort();
+            exit(EXIT_FAILURE);
         }
         else if (childIDs[i] == 0)
         {
-            dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
+            // dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
             dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
 
             close(pipes[i][SLAVE_TO_MASTER][READ_END]);
@@ -56,18 +58,39 @@ int main(int argc, char const *argv[])
             close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
 
             execv("./slave", execParam);
-            perror("exec");
+            perror("Exec failure");
             exit(EXIT_FAILURE);
         }
         else
         {
-            dup2(pipes[i][SLAVE_TO_MASTER][READ_END], STDIN_FILENO);
 
             close(pipes[i][SLAVE_TO_MASTER][READ_END]);
             close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
             close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
         }
+    }
+
+    int batchSize = fileCount / CHILD_COUNT;
+
+    //Loading initial batches
+    for (int i = 0; i < CHILD_COUNT; i++)
+    {
+        for (int j = 0; j < batchSize; j++)
+        {
+
+            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx++], 1024) < 0)
+            {
+                perror("Error writing in child");
+                exit(EXIT_FAILURE);
+            }
+            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2) < 0)
+            {
+                perror("Error writing in child");
+                exit(EXIT_FAILURE);
+            }
+        }
+        //TODO: REMOVER CUANDO IMPLEMENTEMOS BIEN LOS BATCHES
+        close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
     }
 
     // Wait to end
@@ -76,7 +99,7 @@ int main(int argc, char const *argv[])
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {
             perror("Unsuccesful wait");
-            abort();
+            exit(EXIT_FAILURE);
         }
     }
 
