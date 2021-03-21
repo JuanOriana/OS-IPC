@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -78,7 +78,7 @@ int main(int argc, char const *argv[])
         for (int j = 0; j < batchSize; j++)
         {
 
-            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx++], 1024) < 0)
+            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx])) < 0)
             {
                 perror("Error writing in child");
                 exit(EXIT_FAILURE);
@@ -88,6 +88,7 @@ int main(int argc, char const *argv[])
                 perror("Error writing in child");
                 exit(EXIT_FAILURE);
             }
+            currIdx++;
         }
         //TODO: REMOVER CUANDO IMPLEMENTEMOS BIEN LOS BATCHES
         close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
