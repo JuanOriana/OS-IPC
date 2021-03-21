@@ -9,7 +9,7 @@ int main(int argc, char const *argv[])
     char str[256];
     while (scanf("%s", str) != EOF)
     {
-        if (strcmp(str, ""))
+        if (strcmp(str, "") == 0)
             return 0;
         FILE *fd;
         if ((fd = fopen(str, "r")) == NULL)

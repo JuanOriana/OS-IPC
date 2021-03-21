@@ -1,5 +1,10 @@
 app
 view
 arch.txt
-slave
+./slave
 arch1.txt
+folder
+a.txt
+b.txt
+x.txt
+.bash_history
