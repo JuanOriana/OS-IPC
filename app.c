@@ -91,6 +91,7 @@ int main(int argc, char const *argv[])
             currIdx++;
         }
         //TODO: REMOVER CUANDO IMPLEMENTEMOS BIEN LOS BATCHES
+        write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2);
         close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
     }
 
