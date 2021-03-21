@@ -5,14 +5,10 @@
 int readFile(char *line);
 
 int main(int argc, char const *argv[]) {
-
-    if (argc <= 1) {
-        printf("Not enough parameters.\n");
-        return -1;
-    }
-    for (int i = 1; i < argc; i++) {
+    char str[256];
+    while (scanf("%s", str) != EOF) {
         FILE *fd;
-        if ((fd = fopen(argv[i], "r")) == NULL) {
+        if ((fd = fopen(str, "r")) == NULL) {
             perror("fopen");
             exit(-1);
         }
@@ -21,23 +17,24 @@ int main(int argc, char const *argv[]) {
         printf("%d\n", readFile(line));
         fclose(fd);
     }
+
     return 0;
 }
 
 int readFile(char *line) {
     char *token = strtok(line, " ");
     int count = 0;
-    int suma = 0;
+    int sum = 0;
     while (token != NULL) {
         int aux = atoi(token);
         count++;
-        if ((aux == 0 && strcmp(token, "0") != 0)|| count >= 3) {
+        if ((aux == 0 && strcmp(token, "0") != 0) || count >= 3) {
             printf("Error in parameters\n");
             exit(-1);
         }
-        suma += aux;
+        sum += aux;
         token = strtok(NULL, " ");
     }
-    return suma;
+    return sum;
 }
 
