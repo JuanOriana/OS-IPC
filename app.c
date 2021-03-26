@@ -14,7 +14,7 @@
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
 
-int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount);
+int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 int waitAll(int *childIDs, int childCount);
 int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
@@ -32,7 +32,9 @@ int main(int argc, char const *argv[])
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
 
-    initPipes(pipes, CHILD_COUNT);
+    int maxFd = -1;
+
+    initPipes(pipes, CHILD_COUNT, &maxFd);
     initForks(childIDs, CHILD_COUNT, pipes);
 
     int fileCount = argc - 1;
@@ -69,7 +71,7 @@ int main(int argc, char const *argv[])
         char str[256];
         fd_set readSet;
         buildReadSet(&readSet, pipes, CHILD_COUNT);
-        if (select(CHILD_COUNT, &readSet, NULL, NULL, NULL) <= 0)
+        if (select(maxFd + 1, &readSet, NULL, NULL, NULL) <= 0)
         {
             perror("select");
             exit(EXIT_FAILURE);
@@ -90,7 +92,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
+int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd)
 {
 
     for (int i = 0; i < pipeCount; i++)
@@ -101,6 +103,14 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
             {
                 perror("pipe");
                 exit(EXIT_FAILURE);
+            }
+            if (pipeMat[i][j][0] > *maxFd)
+            {
+                *maxFd = pipeMat[i][j][0]
+            }
+            if (pipeMat[i][j][1] > *maxFd)
+            {
+                *maxFd = pipeMat[i][j][1]
             }
         }
     }

@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BUFF_SIZE 1024
 int readFile(char *line);
 
 int main(int argc, char const *argv[])
 {
-    char str[256];
-    char line[256];
+    char str[BUFF_SIZE];
     while (scanf("%s", str) != EOF)
     {
         if (strcmp(str, "") == 0)
@@ -18,8 +18,8 @@ int main(int argc, char const *argv[])
             perror("fopen");
             exit(-1);
         }
-        fscanf(fd, "%[^\n]", line);
-        printf("%d\n", readFile(line));
+        fscanf(fd, "%[^\n]", str);
+        printf("%d\n", readFile(str));
         fclose(fd);
     }
 
