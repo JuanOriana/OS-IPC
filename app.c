@@ -70,7 +70,7 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
 
     for (int i = 0; i < pipeCount; i++)
     {
-        for (int j = 0; j < 2; j++)
+        for (int j = 0; j < PIPES_QTY; j++)
         {
             if (pipe(pipeMat[i][j]) < 0)
             {
