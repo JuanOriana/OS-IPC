@@ -18,7 +18,7 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd)
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 int waitAll(int *childIDs, int childCount);
 int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
-void buildReadSet(fd_set *set, int pipes[][2][2], int childCount);
+void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
 
 int main(int argc, char const *argv[])
 {
@@ -31,6 +31,7 @@ int main(int argc, char const *argv[])
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
+    char closedPipes[CHILD_COUNT] = {0};
 
     int maxFd = -1;
 
@@ -68,9 +69,9 @@ int main(int argc, char const *argv[])
 
     while (readSolves < CHILD_COUNT * batchSize)
     {
-        char str[256]={0};
+        char str[256] = {0};
         fd_set readSet;
-        buildReadSet(&readSet, pipes, CHILD_COUNT);
+        buildReadSet(&readSet, pipes, closedPipes, CHILD_COUNT);
 
         if (select(maxFd + 1, &readSet, NULL, NULL, NULL) <= 0)
         {
@@ -81,9 +82,15 @@ int main(int argc, char const *argv[])
         {
             if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
             {
-                read(pipes[i][SLAVE_TO_MASTER][READ_END], str, 256);
-                printf("%s",str);
-                readSolves++;
+                if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, 256) == 0)
+                {
+                    closedPipes[i] = 1;
+                }
+                else
+                {
+                    printf("%s", str);
+                    readSolves++;
+                }
             }
         }
     }
@@ -183,11 +190,14 @@ int waitAll(int *childIDs, int childCount)
     return 0;
 }
 
-void buildReadSet(fd_set *set, int pipes[][2][2], int childCount)
+void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount)
 {
     FD_ZERO(set);
     for (int i = 0; i < childCount; i++)
     {
-        FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
+        if (!closedPipes[i])
+        {
+            FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
+        }
     }
 }
