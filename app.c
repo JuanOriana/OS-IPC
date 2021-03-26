@@ -65,8 +65,6 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-
-
 int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
 {
 
@@ -98,7 +96,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
         }
         else if (childIDs[i] == 0)
         {
-            // dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
+            dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
             dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
 
             close(pipes[i][SLAVE_TO_MASTER][READ_END]);
@@ -125,7 +123,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
 
 int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY])
 {
-    for (int i = 0; i < pipeCount ; i++)
+    for (int i = 0; i < pipeCount; i++)
     {
         if (i != importantIdx)
         {
