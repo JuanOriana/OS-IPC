@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 
 #define CHILD_COUNT 3
 #define PIPES_QTY 2
@@ -17,6 +18,7 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 int waitAll(int *childIDs, int childCount);
 int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
+void buildReadSet(fd_set *set, int pipes[][2][2], int childCount);
 
 int main(int argc, char const *argv[])
 {
@@ -35,9 +37,11 @@ int main(int argc, char const *argv[])
 
     int fileCount = argc - 1;
     int currIdx = 1;
-    int batchSize = fileCount / CHILD_COUNT;
+    int readSolves = 0;
+    //CAMBIAR
+    int batchSize = 1;
 
-    //Loading initial batches
+    //Loading initial batches CHANGE
     for (int i = 0; i < CHILD_COUNT; i++)
     {
         for (int j = 0; j < batchSize; j++)
@@ -45,12 +49,12 @@ int main(int argc, char const *argv[])
 
             if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx])) < 0)
             {
-                perror("Error writing in child");
+                perror("write");
                 exit(EXIT_FAILURE);
             }
             if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2) < 0)
             {
-                perror("Error writing in child");
+                perror("write");
                 exit(EXIT_FAILURE);
             }
             currIdx++;
@@ -58,6 +62,27 @@ int main(int argc, char const *argv[])
         //TODO: REMOVER CUANDO IMPLEMENTEMOS BIEN LOS BATCHES
         write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2);
         close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+    }
+
+    while (readSolves < CHILD_COUNT * batchSize)
+    {
+        char str[256];
+        fd_set readSet;
+        buildReadSet(&readSet, pipes, CHILD_COUNT);
+        if (select(CHILD_COUNT, &readSet, NULL, NULL, NULL) <= 0)
+        {
+            perror("select");
+            exit(EXIT_FAILURE);
+        }
+        for (int i = 0; i < CHILD_COUNT; i++)
+        {
+            if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
+            {
+                read(pipes[i][SLAVE_TO_MASTER][READ_END], str, 256);
+                printf(str);
+                readSolves++;
+            }
+        }
     }
 
     waitAll(childIDs, CHILD_COUNT);
@@ -74,7 +99,7 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
         {
             if (pipe(pipeMat[i][j]) < 0)
             {
-                perror("Unsuccesful pipe");
+                perror("pipe");
                 exit(EXIT_FAILURE);
             }
         }
@@ -91,7 +116,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
     {
         if ((childIDs[i] = fork()) < 0)
         {
-            perror("Unsuccesful fork");
+            perror("fork");
             exit(EXIT_FAILURE);
         }
         else if (childIDs[i] == 0)
@@ -106,13 +131,12 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
             closeUnrelatedPipes(i, childCount, pipes);
 
             execv("./slave", execParam);
-            perror("Exec failure");
+            perror("execv");
             exit(EXIT_FAILURE);
         }
         else
         {
 
-            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
             close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
             close(pipes[i][MASTER_TO_SLAVE][READ_END]);
         }
@@ -145,9 +169,18 @@ int waitAll(int *childIDs, int childCount)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {
-            perror("Unsuccesful wait");
+            perror("waitpid");
             exit(EXIT_FAILURE);
         }
     }
     return 0;
+}
+
+void buildReadSet(fd_set *set, int pipes[][2][2], int childCount)
+{
+    FD_ZERO(set);
+    for (int i = 0; i < childCount; i++)
+    {
+        FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
+    }
 }
