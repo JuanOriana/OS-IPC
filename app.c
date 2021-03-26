@@ -6,15 +6,17 @@
 #include <sys/wait.h>
 
 #define CHILD_COUNT 3
+#define PIPES_QTY 2
+#define FILEDESC_QTY 2
 #define READ_END 0
 #define WRITE_END 1
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
 
-int initPipes(int ***pipeMat, int pipeCount);
-int initForks(int *childIDs, int childCount, int ***pipes);
+int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount);
+int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 int waitAll(int *childIDs, int childCount);
-int closeUnrelatedPipes(int importantIdx, int pipeCount, int ***pipes);
+int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 
 int main(int argc, char const *argv[])
 {
@@ -65,7 +67,7 @@ int main(int argc, char const *argv[])
 
 
 
-int initPipes(int ***pipeMat, int pipeCount)
+int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount)
 {
 
     for (int i = 0; i < pipeCount; i++)
@@ -82,7 +84,7 @@ int initPipes(int ***pipeMat, int pipeCount)
     return 0;
 }
 
-int initForks(int *childIDs, int childCount, int ***pipes)
+int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY])
 {
 
     char *const *execParam = NULL;
@@ -115,22 +117,21 @@ int initForks(int *childIDs, int childCount, int ***pipes)
             close(pipes[i][SLAVE_TO_MASTER][READ_END]);
             close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
             close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-            closeUnrelatedPipes(i, childCount, pipes);
         }
     }
 
     return 0;
 }
 
-int closeUnrelatedPipes(int importantIdx, int pipeCount, int ***pipes)
+int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY])
 {
-    for (int i = 0; i < pipeCount, i++)
+    for (int i = 0; i < pipeCount ; i++)
     {
         if (i != importantIdx)
         {
-            for (int j = 0; j < 2; j++)
+            for (int j = 0; j < PIPES_QTY; j++)
             {
-                for (int k = 0; k < 2; k++)
+                for (int k = 0; k < FILEDESC_QTY; k++)
                 {
                     close(pipes[i][j][k]);
                 }
@@ -142,7 +143,7 @@ int closeUnrelatedPipes(int importantIdx, int pipeCount, int ***pipes)
 
 int waitAll(int *childIDs, int childCount)
 {
-    for (int i = 0; i < CHILD_COUNT; i++)
+    for (int i = 0; i < childCount; i++)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {

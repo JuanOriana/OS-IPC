@@ -8,12 +8,11 @@ int main(int argc, char const *argv[])
 {
     char str[256];
     char line[256];
-    FILE *fd;
     while (scanf("%s", str) != EOF)
     {
         if (strcmp(str, "") == 0)
             return 0;
-
+        FILE *fd;
         if ((fd = fopen(str, "r")) == NULL)
         {
             perror("fopen");
@@ -32,10 +31,9 @@ int readFile(char *line)
     char *token = strtok(line, " ");
     int count = 0;
     int sum = 0;
-    int aux;
     while (token != NULL)
     {
-        aux = atoi(token);
+        int aux = atoi(token);
         count++;
         if ((aux == 0 && strcmp(token, "0") != 0) || count >= 3)
         {
