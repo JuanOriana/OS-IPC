@@ -104,13 +104,9 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd)
                 perror("pipe");
                 exit(EXIT_FAILURE);
             }
-            if (pipeMat[i][j][0] > *maxFd)
+            if (pipeMat[i][j][READ_END] > *maxFd)
             {
-                *maxFd = pipeMat[i][j][0]
-            }
-            if (pipeMat[i][j][1] > *maxFd)
-            {
-                *maxFd = pipeMat[i][j][1]
+                *maxFd = pipeMat[i][j][READ_END];
             }
         }
     }
