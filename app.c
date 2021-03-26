@@ -11,6 +11,11 @@
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
 
+int initPipes(int ***pipeMat, int pipeCount);
+int initForks(int *childIDs, int childCount, int ***pipes);
+int waitAll(int *childIDs, int childCount);
+int closeUnrelatedPipes(int importantIdx, int pipeCount, int ***pipes);
+
 int main(int argc, char const *argv[])
 {
     if (argc < 2)
@@ -19,57 +24,15 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    int fileCount = argc - 1;
-    int currIdx = 1;
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
-    char *const *execParam = NULL;
 
-    //Pipe inits
-    for (int i = 0; i < CHILD_COUNT; i++)
-    {
-        for (int j = 0; j < 2; j++)
-        {
-            if (pipe(pipes[i][j]) < 0)
-            {
-                perror("Unsuccesful pipe");
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
+    initPipes(pipes, CHILD_COUNT);
+    initForks(childIDs, CHILD_COUNT, pipes);
 
-    // Fork inits
-    for (int i = 0; i < CHILD_COUNT; i++)
-    {
-        if ((childIDs[i] = fork()) < 0)
-        {
-            perror("Unsuccesful fork");
-            exit(EXIT_FAILURE);
-        }
-        else if (childIDs[i] == 0)
-        {
-            // dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
-            dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
-
-            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
-            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
-            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
-
-            execv("./slave", execParam);
-            perror("Exec failure");
-            exit(EXIT_FAILURE);
-        }
-        else
-        {
-
-            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
-            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
-            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-        }
-    }
-
+    int fileCount = argc - 1;
+    int currIdx = 1;
     int batchSize = fileCount / CHILD_COUNT;
 
     //Loading initial batches
@@ -95,7 +58,90 @@ int main(int argc, char const *argv[])
         close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
     }
 
-    // Wait to end
+    waitAll(childIDs, CHILD_COUNT);
+
+    return 0;
+}
+
+
+
+int initPipes(int ***pipeMat, int pipeCount)
+{
+
+    for (int i = 0; i < pipeCount; i++)
+    {
+        for (int j = 0; j < 2; j++)
+        {
+            if (pipe(pipeMat[i][j]) < 0)
+            {
+                perror("Unsuccesful pipe");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    return 0;
+}
+
+int initForks(int *childIDs, int childCount, int ***pipes)
+{
+
+    char *const *execParam = NULL;
+
+    for (int i = 0; i < childCount; i++)
+    {
+        if ((childIDs[i] = fork()) < 0)
+        {
+            perror("Unsuccesful fork");
+            exit(EXIT_FAILURE);
+        }
+        else if (childIDs[i] == 0)
+        {
+            // dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
+            dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
+
+            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
+            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
+            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
+            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+            closeUnrelatedPipes(i, childCount, pipes);
+
+            execv("./slave", execParam);
+            perror("Exec failure");
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+
+            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
+            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
+            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
+            closeUnrelatedPipes(i, childCount, pipes);
+        }
+    }
+
+    return 0;
+}
+
+int closeUnrelatedPipes(int importantIdx, int pipeCount, int ***pipes)
+{
+    for (int i = 0; i < pipeCount, i++)
+    {
+        if (i != importantIdx)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                for (int k = 0; k < 2; k++)
+                {
+                    close(pipes[i][j][k]);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int waitAll(int *childIDs, int childCount)
+{
     for (int i = 0; i < CHILD_COUNT; i++)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
@@ -104,6 +150,5 @@ int main(int argc, char const *argv[])
             exit(EXIT_FAILURE);
         }
     }
-
     return 0;
 }
