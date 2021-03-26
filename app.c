@@ -68,9 +68,10 @@ int main(int argc, char const *argv[])
 
     while (readSolves < CHILD_COUNT * batchSize)
     {
-        char str[256];
+        char str[256]={0};
         fd_set readSet;
         buildReadSet(&readSet, pipes, CHILD_COUNT);
+
         if (select(maxFd + 1, &readSet, NULL, NULL, NULL) <= 0)
         {
             perror("select");
@@ -81,7 +82,7 @@ int main(int argc, char const *argv[])
             if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
             {
                 read(pipes[i][SLAVE_TO_MASTER][READ_END], str, 256);
-                printf(str);
+                printf("%s",str);
                 readSolves++;
             }
         }
