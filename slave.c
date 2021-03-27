@@ -10,6 +10,7 @@ int main(int argc, char const *argv[])
     char str[BUFF_SIZE];
     while (scanf("%s", str) != EOF)
     {
+        ;
         if (strcmp(str, "") == 0)
             return 0;
         FILE *fd;

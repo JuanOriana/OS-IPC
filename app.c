@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/select.h>
+#include <fcntl.h>
 
 #define CHILD_COUNT 3
 #define PIPES_QTY 2
@@ -19,6 +20,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
 int waitAll(int *childIDs, int childCount);
 int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_QTY][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
+void sendFile(int fd, const char *file, int fileLen);
 
 int main(int argc, char const *argv[])
 {
@@ -50,24 +52,12 @@ int main(int argc, char const *argv[])
         for (int j = 0; j < batchSize; j++)
         {
 
-            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx])) < 0)
-            {
-                perror("write");
-                exit(EXIT_FAILURE);
-            }
-            if (write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2) < 0)
-            {
-                perror("write");
-                exit(EXIT_FAILURE);
-            }
+            sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
             currIdx++;
         }
-        //TODO: REMOVER CUANDO IMPLEMENTEMOS BIEN LOS BATCHES
-        write(pipes[i][MASTER_TO_SLAVE][WRITE_END], " ", 2);
-        close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
     }
 
-    while (readSolves < CHILD_COUNT * batchSize)
+    while (readSolves < fileCount)
     {
         char str[256] = {0};
         fd_set readSet;
@@ -78,6 +68,7 @@ int main(int argc, char const *argv[])
             perror("select");
             exit(EXIT_FAILURE);
         }
+
         for (int i = 0; i < CHILD_COUNT; i++)
         {
             if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
@@ -88,8 +79,22 @@ int main(int argc, char const *argv[])
                 }
                 else
                 {
-                    printf("%s", str);
-                    readSolves++;
+                    char *token = strtok(str, "\n");
+                    while (token != NULL)
+                    {
+                        if (currIdx < argc)
+                        {
+                            sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
+                            currIdx++;
+                        }
+                        else
+                        {
+                            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+                        }
+                        printf("%s\n", token);
+                        token = strtok(NULL, "\n");
+                        readSolves++;
+                    }
                 }
             }
         }
@@ -112,6 +117,10 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd)
                 perror("pipe");
                 exit(EXIT_FAILURE);
             }
+
+            fcntl(pipeMat[i][j][0], F_SETFL, O_NONBLOCK);
+            fcntl(pipeMat[i][j][1], F_SETFL, O_NONBLOCK);
+
             if (pipeMat[i][j][READ_END] > *maxFd)
             {
                 *maxFd = pipeMat[i][j][READ_END];
@@ -199,5 +208,20 @@ void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childC
         {
             FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
         }
+    }
+}
+
+void sendFile(int fd, const char *file, int fileLen)
+{
+
+    if (write(fd, file, fileLen) < 0)
+    {
+        perror("write");
+        exit(EXIT_FAILURE);
+    }
+    if (write(fd, " ", 2) < 0)
+    {
+        perror("write");
+        exit(EXIT_FAILURE);
     }
 }
