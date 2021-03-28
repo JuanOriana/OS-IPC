@@ -1,29 +1,22 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #define BUFF_SIZE 1024
+
 int readFile(char *line);
 
 int main(int argc, char const *argv[])
 {
-    char str[BUFF_SIZE];
-    while (scanf("%s", str) != EOF)
+    char *line = NULL;
+    size_t len = 0;
+    size_t lineSize = 0;
+    while ((lineSize = getline(&line, &len, stdin)) > 0)
     {
-        ;
-        if (strcmp(str, "") == 0)
-            return 0;
-        FILE *fd;
-        if ((fd = fopen(str, "r")) == NULL)
-        {
-            perror("fopen");
-            exit(-1);
-        }
-        fscanf(fd, "%[^\n]", str);
-        printf("%d\n", readFile(str));
-        fclose(fd);
+        printf("%s", line);
     }
-
+    free(line);
     return 0;
 }
 

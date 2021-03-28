@@ -7,7 +7,7 @@
 #include <sys/select.h>
 #include <fcntl.h>
 
-#define CHILD_COUNT 3
+#define CHILD_COUNT 1
 #define PIPES_QTY 2
 #define FILEDESC_QTY 2
 #define READ_END 0
@@ -118,9 +118,6 @@ int initPipes(int pipeMat[][PIPES_QTY][FILEDESC_QTY], int pipeCount, int *maxFd)
                 exit(EXIT_FAILURE);
             }
 
-            fcntl(pipeMat[i][j][0], F_SETFL, O_NONBLOCK);
-            fcntl(pipeMat[i][j][1], F_SETFL, O_NONBLOCK);
-
             if (pipeMat[i][j][READ_END] > *maxFd)
             {
                 *maxFd = pipeMat[i][j][READ_END];
@@ -151,7 +148,6 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_QTY][FILEDESC_QTY
             close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
             close(pipes[i][MASTER_TO_SLAVE][READ_END]);
             close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
-            closeUnrelatedPipes(i, childCount, pipes);
 
             execv("./slave", execParam);
             perror("execv");
