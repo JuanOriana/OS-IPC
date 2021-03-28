@@ -11,7 +11,8 @@ int main(int argc, char const *argv[])
 {
     char *line = NULL;
     size_t len = 0;
-    size_t lineSize = 0;
+    ssize_t lineSize = 0;
+
     while ((lineSize = getline(&line, &len, stdin)) > 0)
     {
         printf("%s", line);
