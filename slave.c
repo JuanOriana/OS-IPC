@@ -9,15 +9,32 @@ int readFile(char *line);
 
 int main(int argc, char const *argv[])
 {
-    char *line = NULL;
+    setvbuf(stdout,NULL,_IONBF,0);
+    char *path = NULL;
+    char line[256];
     size_t len = 0;
     ssize_t lineSize = 0;
+    FILE* fd;
 
-    while ((lineSize = getline(&line, &len, stdin)) > 0)
+    while ((lineSize = getline(&path, &len, stdin)) > 0)
     {
-        printf("%s", line);
+        if(strcmp(path,"") == 0)
+            return 0;
+
+        path[strcspn(path, "\n")] = 0; //Clearing path
+
+        if ((fd = fopen(path, "r")) == NULL)
+        {
+            perror("fopen");
+            exit(-1);
+        }
+
+        fscanf(fd, "%[^\n]", line);
+        printf("%d\n", readFile(line));
+        fclose(fd);
+
     }
-    free(line);
+    free(path);
     return 0;
 }
 

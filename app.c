@@ -7,7 +7,7 @@
 #include <sys/select.h>
 #include <fcntl.h>
 
-#define CHILD_COUNT 1
+#define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
 #define FILEDESC_QTY 2
 #define READ_END 0
@@ -18,7 +18,7 @@
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 int waitAll(int *childIDs, int childCount);
-int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
+int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
 void sendFile(int fd, const char *file, int fileLen);
 
@@ -144,11 +144,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
             dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
             dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
 
-            close(pipes[i][SLAVE_TO_MASTER][READ_END]);
-            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
-            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
-           // closeUnrelatedPipes(i,PIPES_PER_CHILD,pipes);
+            closePipes(CHILD_COUNT,pipes);
             execv("./slave", execParam);
             perror("execv");
             exit(EXIT_FAILURE);
@@ -164,23 +160,20 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
     return 0;
 }
 
-// int closeUnrelatedPipes(int importantIdx, int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
-// {
-//     for (int i = 0; i < pipeCount; i++)
-//     {
-//         if (i != importantIdx)
-//         {
-//             for (int j = 0; j < PIPES_PER_CHILD; j++)
-//             {
-//                 for (int k = 0; k < FILEDESC_QTY; k++)
-//                 {
-//                     close(pipes[i][j][k]);
-//                 }
-//             }
-//         }
-//     }
-//     return 0;
-// }
+int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
+{
+    for (int i = 0; i < pipeCount; i++)
+    {
+            for (int j = 0; j < PIPES_PER_CHILD; j++)
+            {
+                for (int k = 0; k < FILEDESC_QTY; k++)
+                {
+                    close(pipes[i][j][k]);
+                }
+            }
+    }
+    return 0;
+}
 
 int waitAll(int *childIDs, int childCount)
 {
@@ -215,7 +208,7 @@ void sendFile(int fd, const char *file, int fileLen)
         perror("write");
         exit(EXIT_FAILURE);
     }
-    if (write(fd, " ", 2) < 0)
+    if (write(fd, "\n", 1) < 0)
     {
         perror("write");
         exit(EXIT_FAILURE);
