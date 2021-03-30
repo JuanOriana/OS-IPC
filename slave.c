@@ -47,7 +47,7 @@ void solve(char *file) {
     if (stream == NULL) {
         perror("popen");
         exit(EXIT_FAILURE);
-    } 
+    }
 
     if (fgets(buff, MAX_FILE_LENGTH, stream) == NULL) {
         perror("fgets");
@@ -70,7 +70,7 @@ void solve(char *file) {
         exit(EXIT_FAILURE);
     }
 
-    printf("PID:%d\nFilename:%s\nNumberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
+    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
                 clauses, cpuTime, state);
 
 }
