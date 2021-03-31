@@ -33,7 +33,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
 char *initShMem(int shmSize);
 int waitAll(int *childIDs, int childCount);
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
-void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
+void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount);
 void sendFile(int fd, const char *file, int fileLen);
 void sendBatches(const char **files, int childCount, int batchSize, int pipes[][2][2], int *currIdx);
 
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
-    char closedPipes[CHILD_COUNT] = {0};
+    char closedPipes[CHILD_COUNT][2] = {0};
 
     int maxFd = -1;
     int fileCount = argc - 1;
@@ -88,7 +88,7 @@ int main(int argc, char const *argv[])
             {
                 if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, BUFF_SIZE) == 0)
                 {
-                    closedPipes[i] = 1;
+                    closedPipes[READ_END][i] = 1;
                 }
                 else
                 {
@@ -98,10 +98,15 @@ int main(int argc, char const *argv[])
                         if (currIdx < argc)
                         {
                             sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
+                            readSolves++;
                         }
                         else
                         {
-                            close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+                            if (!closedPipes[i][WRITE_END])
+                            {
+                                close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+                                closedPipes[i][WRITE_END] = 1;
+                            }
                         }
                         (*(long *)shmBase)++;
                         sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
@@ -231,12 +236,12 @@ int waitAll(int *childIDs, int childCount)
     return 0;
 }
 
-void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount)
+void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount)
 {
     FD_ZERO(set);
     for (int i = 0; i < childCount; i++)
     {
-        if (!closedPipes[i])
+        if (!closedPipes[i][READ_END])
         {
             FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
         }
