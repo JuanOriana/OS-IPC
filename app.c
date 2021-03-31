@@ -98,7 +98,6 @@ int main(int argc, char const *argv[])
                         if (currIdx < argc)
                         {
                             sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
-                            currIdx++;
                         }
                         else
                         {
