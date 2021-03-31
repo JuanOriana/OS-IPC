@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 500  //ftruncate warning
+#define _XOPEN_SOURCE 500 //ftruncate warning
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,6 @@
 #include <sys/select.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -28,10 +27,10 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-void errorHandler(char* funcName);
+void errorHandler(char *funcName);
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
-char* initShMem(int shmSize);
+char *initShMem(int shmSize);
 int waitAll(int *childIDs, int childCount);
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
@@ -49,7 +48,7 @@ int main(int argc, char const *argv[])
     int totalFiles = argc - 1;
     char *shmBase;
     char *shmOffset;
-    shmBase = initShMem(OUTPUT_SIZE*totalFiles);
+    shmBase = initShMem(OUTPUT_SIZE * totalFiles);
     shmOffset = shmBase;
 
     printf("vista parameter is <param>\n");
@@ -108,7 +107,7 @@ int main(int argc, char const *argv[])
                         {
                             close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                         }
-                        shmOffset += sprintf(shmOffset,"%s\n",token);
+                        shmOffset += sprintf(shmOffset, "%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -119,10 +118,11 @@ int main(int argc, char const *argv[])
 
     waitAll(childIDs, childCount);
     sleep(10); //Provisional para cat shmem y ver que este todo ok
-    if(shm_unlink(SHMEM_PATH) == -1){
+    if (shm_unlink(SHMEM_PATH) == -1)
+    {
         errorHandler("shm_unlink");
     }
-    
+
     return 0;
 }
 
@@ -178,23 +178,27 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
     return 0;
 }
 
-char * initShMem(int shmSize){
+char *initShMem(int shmSize)
+{
     int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
-    if(shmFd == -1) {
+    if (shmFd == -1)
+    {
         errorHandler("shm_open");
     }
 
-
-    if(ftruncate(shmFd, shmSize) == -1) {
-       errorHandler("ftruncate");
+    if (ftruncate(shmFd, shmSize) == -1)
+    {
+        errorHandler("ftruncate");
     }
 
-    char *shmBase = mmap(NULL,shmSize,PROT_READ | PROT_WRITE,MAP_SHARED,shmFd,0);
-    if(shmBase == MAP_FAILED) {
+    char *shmBase = mmap(NULL, shmSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
+    if (shmBase == MAP_FAILED)
+    {
         errorHandler("mmap");
     }
 
-    if((close(shmFd)) == -1) {
+    if ((close(shmFd)) == -1)
+    {
         errorHandler("close");
     }
 
@@ -222,7 +226,7 @@ int waitAll(int *childIDs, int childCount)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {
-           errorHandler("waitpid");
+            errorHandler("waitpid");
         }
     }
     return 0;
@@ -253,7 +257,8 @@ void sendFile(int fd, const char *file, int fileLen)
     }
 }
 
-void errorHandler(char *funcName) {
+void errorHandler(char *funcName)
+{
     perror(funcName);
     exit(EXIT_FAILURE);
 }
