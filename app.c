@@ -19,7 +19,7 @@
 #define WRITE_END 1
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
-#define OUTPUT_SIZE 4096
+#define MAX_OUTPUT_SIZE 4096
 #define SHMEM_PATH "/shmemBuffer"
 #define BATCH_PERC 0.2
 #define BUFF_SIZE 1024
@@ -46,10 +46,7 @@ int main(int argc, char const *argv[])
     }
 
     int totalFiles = argc - 1;
-    char *shmBase;
-    char *shmOffset;
-    shmBase = initShMem(OUTPUT_SIZE * totalFiles);
-    shmOffset = shmBase;
+    char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
 
     printf("vista parameter is <param>\n");
     sleep(2);
@@ -107,7 +104,8 @@ int main(int argc, char const *argv[])
                         {
                             close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                         }
-                        shmOffset += sprintf(shmOffset, "%s\n", token);
+                        (*(long *)shmBase)++;
+                        sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -181,26 +179,28 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
 char *initShMem(int shmSize)
 {
     int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
-    if (shmFd == -1)
+    if (shmFd < 0)
     {
         errorHandler("shm_open");
     }
 
-    if (ftruncate(shmFd, shmSize) == -1)
+    if (ftruncate(shmFd, shmSize) < 0)
     {
         errorHandler("ftruncate");
     }
 
     char *shmBase = mmap(NULL, shmSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
+
     if (shmBase == MAP_FAILED)
     {
         errorHandler("mmap");
     }
-
-    if ((close(shmFd)) == -1)
+    //  FD no longer needed to be open after mmap
+    if ((close(shmFd)) < 0)
     {
         errorHandler("close");
     }
+    *(long *)shmBase = 0;
 
     return shmBase;
 }
