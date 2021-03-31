@@ -1,11 +1,17 @@
+#define _XOPEN_SOURCE 500  //ftruncate warning
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/shm.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <sys/select.h>
+#include <sys/mman.h>
 #include <fcntl.h>
+
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -14,9 +20,13 @@
 #define WRITE_END 1
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
+#define OUTPUT_SIZE 4096
+#define SHMEM_PATH "/shmemBuffer"
 
+void errorHandler(char* funcName);
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
+char* initShMem(int shmSize);
 int waitAll(int *childIDs, int childCount);
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[], int childCount);
@@ -29,6 +39,15 @@ int main(int argc, char const *argv[])
         fprintf(stderr, "Usage: %s <files>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    int totalFiles = argc - 1;
+    char *shmBase;
+    char *shmOffset;
+    shmBase = initShMem(OUTPUT_SIZE*totalFiles);
+    shmOffset = shmBase;
+
+    printf("vista parameter is <param>\n");
+    sleep(2);
 
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
@@ -65,8 +84,7 @@ int main(int argc, char const *argv[])
 
         if (select(maxFd + 1, &readSet, NULL, NULL, NULL) <= 0)
         {
-            perror("select");
-            exit(EXIT_FAILURE);
+            errorHandler("select");
         }
 
         for (int i = 0; i < CHILD_COUNT; i++)
@@ -91,7 +109,7 @@ int main(int argc, char const *argv[])
                         {
                             close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                         }
-                        printf("%s\n", token);
+                        shmOffset += sprintf(shmOffset,"%s\n",token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -101,7 +119,10 @@ int main(int argc, char const *argv[])
     }
 
     waitAll(childIDs, CHILD_COUNT);
-
+    sleep(10); //Provisional para cat shmem y ver que este todo ok
+    if(shm_unlink(SHMEM_PATH) == -1){
+        errorHandler("shm_unlink");
+    }
     return 0;
 }
 
@@ -114,8 +135,7 @@ int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *
         {
             if (pipe(pipeMat[i][j]) < 0)
             {
-                perror("pipe");
-                exit(EXIT_FAILURE);
+                errorHandler("pipe");
             }
 
             if (pipeMat[i][j][READ_END] > *maxFd)
@@ -136,8 +156,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
     {
         if ((childIDs[i] = fork()) < 0)
         {
-            perror("fork");
-            exit(EXIT_FAILURE);
+            errorHandler("fork");
         }
         else if (childIDs[i] == 0)
         {
@@ -146,8 +165,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
 
             closePipes(CHILD_COUNT,pipes);
             execv("./slave", execParam);
-            perror("execv");
-            exit(EXIT_FAILURE);
+            errorHandler("execv");
         }
         else
         {
@@ -158,6 +176,29 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
     }
 
     return 0;
+}
+
+char * initShMem(int shmSize){
+    int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+    if(shmFd == -1) {
+        errorHandler("shm_open");
+    }
+
+
+    if(ftruncate(shmFd, shmSize) == -1) {
+       errorHandler("ftruncate");
+    }
+
+    char *shmBase = mmap(NULL,shmSize,PROT_READ | PROT_WRITE,MAP_SHARED,shmFd,0);
+    if(shmBase == MAP_FAILED) {
+        errorHandler("mmap");
+    }
+
+    if((close(shmFd)) == -1) {
+        errorHandler("close");
+    }
+
+    return shmBase;
 }
 
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
@@ -181,8 +222,7 @@ int waitAll(int *childIDs, int childCount)
     {
         if (waitpid(childIDs[i], NULL, 0) < 0)
         {
-            perror("waitpid");
-            exit(EXIT_FAILURE);
+           errorHandler("waitpid");
         }
     }
     return 0;
@@ -205,12 +245,15 @@ void sendFile(int fd, const char *file, int fileLen)
 
     if (write(fd, file, fileLen) < 0)
     {
-        perror("write");
-        exit(EXIT_FAILURE);
+        errorHandler("write");
     }
     if (write(fd, "\n", 1) < 0)
     {
-        perror("write");
-        exit(EXIT_FAILURE);
+        errorHandler("write");
     }
+}
+
+void errorHandler(char *funcName) {
+    perror(funcName);
+    exit(EXIT_FAILURE);
 }

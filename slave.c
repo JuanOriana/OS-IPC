@@ -64,13 +64,13 @@ void solve(char *file) {
     float cpuTime = -1;
     char state[14] = "";
 
-    retValue = sscanf(buff, "Numberofvariables:%dNumberofclauses:%dCPUtime:%fs%s", &variables, &clauses, &cpuTime, state);
+    retValue = sscanf(buff, "Number of variables:%dNumber of clauses:%dCPUtime:%fs%s", &variables, &clauses, &cpuTime, state);
     if (retValue == EOF) {
         perror("sscanf");
         exit(EXIT_FAILURE);
     }
 
-    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
+    printf("PID:%d Filename:%sNumber of variables:%d Number of clauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
                 clauses, cpuTime, state);
 
 }
