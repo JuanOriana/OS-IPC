@@ -45,16 +45,16 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    int totalFiles = argc - 1;
-    char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
+    // int totalFiles = argc - 1;
+    // char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
 
-    printf("vista parameter is <param>\n");
-    sleep(2);
+    // printf("vista parameter is <param>\n");
+    // sleep(2);
 
     pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
-    char closedPipes[CHILD_COUNT][2] = {0};
+    char closedPipes[CHILD_COUNT][2] = {{0}};
 
     int maxFd = -1;
     int fileCount = argc - 1;
@@ -88,7 +88,8 @@ int main(int argc, char const *argv[])
             {
                 if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, BUFF_SIZE) == 0)
                 {
-                    closedPipes[READ_END][i] = 1;
+                    closedPipes[i][READ_END] = 1;
+                    close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                 }
                 else
                 {
@@ -98,34 +99,35 @@ int main(int argc, char const *argv[])
                         if (currIdx < argc)
                         {
                             sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
-                            readSolves++;
+                            currIdx++;
                         }
                         else
                         {
-                            if (!closedPipes[i][WRITE_END])
+                            if (closedPipes[i][WRITE_END] == 0)
                             {
                                 close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                                 closedPipes[i][WRITE_END] = 1;
                             }
                         }
-                        (*(long *)shmBase)++;
-                        sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
+                        //(*(long *)shmBase)++;
+                        //printf("%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
                 }
             }
         }
+        printf("%d\n", readSolves);
     }
 
     waitAll(childIDs, childCount);
-    sleep(10); //Provisional para cat shmem y ver que este todo ok
-    if (shm_unlink(SHMEM_PATH) == -1)
-    {
-        errorHandler("shm_unlink");
-    }
+    //sleep(10); //Provisional para cat shmem y ver que este todo ok
+    // if (shm_unlink(SHMEM_PATH) == -1)
+    // {
+    //     errorHandler("shm_unlink");
+    // }
 
-    return 0;
+    // return 0;
 }
 
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd)
