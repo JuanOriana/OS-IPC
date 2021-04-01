@@ -42,6 +42,7 @@ void sendBatches(const char **files, int childCount, int batchSize, int pipes[][
 
 int main(int argc, char const *argv[])
 {
+
     if (argc < 2)
     {
         fprintf(stderr, "Usage: %s <files>\n", argv[0]);
@@ -65,8 +66,8 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    printf("View parameter is %d\n", fileCount);
-    sleep(5);
+    sleep(1);
+    printf("%d\n", fileCount);
 
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
@@ -138,7 +139,6 @@ int main(int argc, char const *argv[])
         }
     }
 
-    printf("%d\n", readSolves);
     waitAll(childIDs, childCount);
 
     if (munmap(shmBase, MAX_OUTPUT_SIZE * fileCount + sizeof(long)) < 0)

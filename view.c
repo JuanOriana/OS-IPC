@@ -3,6 +3,7 @@
 #include <sys/shm.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <unistd.h>
@@ -27,9 +28,10 @@ int main(int argc, char const *argv[])
     {
         fileCount = atoi(argv[1]);
     }
-    else
+    else if (argc == 1)
     {
         scanf("%d", &fileCount);
+        printf("%d", fileCount);
     }
 
     sem_t *mutexSem, *fullSem;
@@ -48,14 +50,25 @@ int main(int argc, char const *argv[])
 
     int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
     char *shmBase = mmap(NULL, MAX_OUTPUT_SIZE * fileCount + sizeof(long), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
+    int i = 0;
 
     while (1)
     {
+        if (i == fileCount)
+        {
+            break;
+        }
         sem_wait(fullSem);
         sem_wait(mutexSem);
+        if (strcmp(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "DONE") == 0)
+        {
+            sem_post(mutexSem);
+            exit(0);
+        }
         printf("%s", shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE);
         (*(long *)shmBase)--;
         sem_post(mutexSem);
+        i++;
     }
 
     close(shmFd);
