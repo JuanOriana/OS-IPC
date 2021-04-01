@@ -45,8 +45,8 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // int totalFiles = argc - 1;
-    // char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
+    int totalFiles = argc - 1;
+    char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
 
     // printf("vista parameter is <param>\n");
     // sleep(2);
@@ -109,8 +109,8 @@ int main(int argc, char const *argv[])
                                 closedPipes[i][WRITE_END] = 1;
                             }
                         }
-                        //(*(long *)shmBase)++;
-                        //printf("%s\n", token);
+                        // (*(long *)shmBase)++;
+                        shmBase += sprintf(shmBase ,"%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -121,13 +121,13 @@ int main(int argc, char const *argv[])
     }
 
     waitAll(childIDs, childCount);
-    //sleep(10); //Provisional para cat shmem y ver que este todo ok
-    // if (shm_unlink(SHMEM_PATH) == -1)
-    // {
-    //     errorHandler("shm_unlink");
-    // }
+    sleep(10); //Provisional para cat shmem y ver que este todo ok
+     if (shm_unlink(SHMEM_PATH) == -1)
+     {
+         errorHandler("shm_unlink");
+     }
 
-    // return 0;
+     return 0;
 }
 
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd)
