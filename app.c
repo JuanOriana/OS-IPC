@@ -45,19 +45,18 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    int totalFiles = argc - 1;
-    char *shmBase = initShMem(MAX_OUTPUT_SIZE * totalFiles);
+    int fileCount = argc - 1;
+    char *shmBase = initShMem(MAX_OUTPUT_SIZE * fileCount);
 
     // printf("vista parameter is <param>\n");
     // sleep(2);
 
-    pid_t childIDs[CHILD_COUNT];
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
+    pid_t childIDs[CHILD_COUNT];
     char closedPipes[CHILD_COUNT][2] = {{0}};
 
     int maxFd = -1;
-    int fileCount = argc - 1;
     int childCount = MIN(CHILD_COUNT, fileCount);
 
     initPipes(pipes, childCount, &maxFd);
@@ -110,7 +109,7 @@ int main(int argc, char const *argv[])
                             }
                         }
                         (*(long *)shmBase)++;
-                        sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE ,"%s\n", token);
+                        sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -122,12 +121,18 @@ int main(int argc, char const *argv[])
 
     waitAll(childIDs, childCount);
     sleep(10); //Provisional para cat shmem y ver que este todo ok
-     if (shm_unlink(SHMEM_PATH) == -1)
-     {
-         errorHandler("shm_unlink");
-     }
 
-     return 0;
+    if (munmap(shmBase, MAX_OUTPUT_SIZE * fileCount + sizeof(long)) < 0)
+    {
+        errorHandler("munmap")
+    }
+
+    if (shm_unlink(SHMEM_PATH) < 0)
+    {
+        errorHandler("shm_unlink");
+    }
+
+    return 0;
 }
 
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd)
