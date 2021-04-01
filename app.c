@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
 
     if (munmap(shmBase, MAX_OUTPUT_SIZE * fileCount + sizeof(long)) < 0)
     {
-        errorHandler("munmap")
+        errorHandler("munmap");
     }
 
     if (shm_unlink(SHMEM_PATH) < 0)
