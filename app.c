@@ -89,7 +89,7 @@ int main(int argc, char const *argv[])
                 if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, BUFF_SIZE) == 0)
                 {
                     closedPipes[i][READ_END] = 1;
-                    close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
+                    close(pipes[i][SLAVE_TO_MASTER][READ_END]);
                 }
                 else
                 {
