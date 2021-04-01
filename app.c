@@ -11,6 +11,7 @@
 #include <sys/select.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <semaphore.h>
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -21,6 +22,8 @@
 #define MASTER_TO_SLAVE 1
 #define MAX_OUTPUT_SIZE 4096
 #define SHMEM_PATH "/shmemBuffer"
+#define SEM_MUTEX_NAME "/sem-mutex"
+#define SEM_FULL_NAME "/sem-full-count"
 #define BATCH_PERC 0.2
 #define BUFF_SIZE 1024
 
@@ -48,8 +51,22 @@ int main(int argc, char const *argv[])
     int fileCount = argc - 1;
     char *shmBase = initShMem(MAX_OUTPUT_SIZE * fileCount);
 
-    // printf("vista parameter is <param>\n");
-    // sleep(2);
+    sem_t *mutexSem, *fullSem;
+
+    if ((mutexSem = sem_open(SEM_MUTEX_NAME, O_CREAT, 0660, 1)) == SEM_FAILED)
+    {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((fullSem = sem_open(SEM_FULL_NAME, O_CREAT, 0660, 0)) == SEM_FAILED)
+    {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("View parameter is %d\n", fileCount);
+    sleep(5);
 
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
@@ -108,28 +125,44 @@ int main(int argc, char const *argv[])
                                 closedPipes[i][WRITE_END] = 1;
                             }
                         }
+                        sem_wait(mutexSem);
                         (*(long *)shmBase)++;
                         sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
+                        sem_post(mutexSem);
+                        sem_post(fullSem);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
                 }
             }
         }
-        printf("%d\n", readSolves);
     }
 
+    printf("%d\n", readSolves);
     waitAll(childIDs, childCount);
-    sleep(10); //Provisional para cat shmem y ver que este todo ok
 
     if (munmap(shmBase, MAX_OUTPUT_SIZE * fileCount + sizeof(long)) < 0)
     {
         errorHandler("munmap");
     }
 
+    // CAMBIAR
     if (shm_unlink(SHMEM_PATH) < 0)
     {
-        errorHandler("shm_unlink");
+        perror("shm_unlink");
+        exit(EXIT_FAILURE);
+    }
+
+    if (sem_unlink(SEM_MUTEX_NAME) < 0)
+    {
+        perror("sem_unlink");
+        exit(EXIT_FAILURE);
+    }
+
+    if (sem_unlink(SEM_FULL_NAME) < 0)
+    {
+        perror("sem_unlink");
+        exit(EXIT_FAILURE);
     }
 
     return 0;
