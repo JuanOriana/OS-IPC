@@ -109,8 +109,8 @@ int main(int argc, char const *argv[])
                                 closedPipes[i][WRITE_END] = 1;
                             }
                         }
-                        // (*(long *)shmBase)++;
-                        shmBase += sprintf(shmBase ,"%s\n", token);
+                        (*(long *)shmBase)++;
+                        sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE ,"%s\n", token);
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -190,12 +190,12 @@ char *initShMem(int shmSize)
         errorHandler("shm_open");
     }
 
-    if (ftruncate(shmFd, shmSize) < 0)
+    if (ftruncate(shmFd, shmSize + sizeof(long)) < 0)
     {
         errorHandler("ftruncate");
     }
 
-    char *shmBase = mmap(NULL, shmSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
+    char *shmBase = mmap(NULL, shmSize + sizeof(long), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
 
     if (shmBase == MAP_FAILED)
     {
