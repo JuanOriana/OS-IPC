@@ -92,3 +92,88 @@ cd root
 cd root
 minisat
 exit
+cd root
+apt-install minisat
+apt-get install minisat
+apt-get install minisat
+make clean; make
+make clean; make
+./app ./folder/*
+make clean; make
+make clean; make
+make clean
+make clean; make
+make clean; make
+make clean; make
+make clean; make
+clear
+make clean; make
+clear
+make clean; make
+make clean; make
+clear
+----
+make clean; make
+make clean; make
+clear
+---
+make clean; make
+make clean; make
+./app ./folder/*
+make clean; make
+make clean; make
+make clean; make
+make clean; make
+clear
+make clean; make
+make clean; make
+make clean; make
+clear
+make clean; make
+make clean; make
+clear
+--------------------
+#define MAX_OUTPUT_SIZE 4096
+make clean; make
+make clean; make
+clear
+make clean; make
+make clean; make
+clear
+make clean; make
+make clean; make
+make clean; make
+clear
+./app ./folder/*
+make clean; make
+./view
+./app ./folder/* | ./view
+clear
+make clean; make
+./app ./folder/* | ./view
+./app ./folder/* | ./view
+make clean; make
+./app ./folder/* | ./view
+../dev/shm
+ls
+cd ../dev/shm
+rm *
+ls
+cd ..
+cd ..
+cd root
+make clean; make
+./app ./folder/* | ./view
+cd ../dev/shm
+rm *
+cd ../root
+cd ../../root
+ls
+strace ./app ./folder/* | ./view
+cd ../../root
+cd ../dev/shm
+rm *
+cd ../../root
+make clean; make
+./app ./folder/* | ./view
+./app ./folder/* | ./view

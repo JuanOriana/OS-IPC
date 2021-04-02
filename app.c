@@ -54,19 +54,19 @@ int main(int argc, char const *argv[])
 
     sem_t *mutexSem, *fullSem;
 
-    if ((mutexSem = sem_open(SEM_MUTEX_NAME, O_CREAT, 0660, 1)) == SEM_FAILED)
+    if ((mutexSem = sem_open(SEM_MUTEX_NAME, O_CREAT | O_EXCL, 0660, 1)) == SEM_FAILED)
     {
         perror("sem_open");
         exit(EXIT_FAILURE);
     }
 
-    if ((fullSem = sem_open(SEM_FULL_NAME, O_CREAT, 0660, 0)) == SEM_FAILED)
+    if ((fullSem = sem_open(SEM_FULL_NAME, O_CREAT | O_EXCL, 0660, 0)) == SEM_FAILED)
     {
         perror("sem_open");
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
     printf("%d\n", fileCount);
 
     // 2 pipes per child
@@ -222,7 +222,7 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
 
 char *initShMem(int shmSize)
 {
-    int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+    int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR | O_EXCL, S_IWUSR | S_IRUSR);
     if (shmFd < 0)
     {
         errorHandler("shm_open");
