@@ -1,10 +1,14 @@
 CC=gcc
+GCCFLAGS = -g -Wall -std=c99
+GCCLIBS = -lrt -lpthread
+APP = app view slave
 
-appmake: app.c slave.c
-	@$(CC) -g app.c -o app -lrt -lpthread -Wall -std=c99
-	@$(CC) -g slave.c -o slave -Wall -std=c99
-	@$(CC) -g view.c -o view -lrt -lpthread -Wall -std=c99
+
+all: $(APP)
+
+$(APP): %: %.c
+	@$(CC) $(GCCFLAGS) -o $@ $< $(GCCLIBS)
 
 .PHONY: clean
 clean:
-	@rm -f slave app view
+	@rm -rf $(APP)
