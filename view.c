@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _XOPEN_SOURCE 500
 
 #include <sys/shm.h>
@@ -27,10 +29,14 @@ int main(int argc, char const *argv[])
     else if (argc == 2)
     {
         fileCount = atoi(argv[1]);
+
     }
     else if (argc == 1)
     {
-        scanf("%d", &fileCount);
+        if(scanf("%10d", &fileCount) != 1) {
+            perror("scanf");
+            exit(EXIT_FAILURE);
+        }
         printf("%d\n", fileCount);
     }
 
