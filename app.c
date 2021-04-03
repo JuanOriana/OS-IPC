@@ -14,6 +14,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <semaphore.h>
+#include "resourcesADT.h"
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -53,24 +54,14 @@ int main(int argc, char const *argv[])
     }
 
     int fileCount = argc - 1;
-    char *shmBase = initShMem(MAX_OUTPUT_SIZE * fileCount);
-    sem_t *mutexSem, *fullSem;
 
-    if ((mutexSem = sem_open(SEM_MUTEX_NAME, O_CREAT | O_EXCL, 0660, 1)) == SEM_FAILED)
-    {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
-
-    if ((fullSem = sem_open(SEM_FULL_NAME, O_CREAT | O_EXCL, 0660, 0)) == SEM_FAILED)
-    {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
+    ResourcesPtr resources = resourcesInit(fileCount * MAX_OUTPUT_SIZE, SHMEM_PATH, SEM_MUTEX_NAME, SEM_FULL_NAME);
+    sem_t *fullSem = getFull(resources);
+    sem_t *mutexSem = getMutex(resources);
+    char *shmBase = getShmBase(resources);
 
     sleep(1);
     printf("%d\n", fileCount);
-    fflush(stdin);
 
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
@@ -144,28 +135,7 @@ int main(int argc, char const *argv[])
 
     waitAll(childIDs, childCount);
 
-    if (munmap(shmBase, MAX_OUTPUT_SIZE * fileCount + sizeof(long)) < 0)
-    {
-        errorHandler("munmap");
-    }
-
-    if (shm_unlink(SHMEM_PATH) < 0)
-    {
-        perror("shm_unlink");
-        exit(EXIT_FAILURE);
-    }
-
-    if (sem_unlink(SEM_MUTEX_NAME) < 0)
-    {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
-
-    if (sem_unlink(SEM_FULL_NAME) < 0)
-    {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
+    resourcesUnlink(resources);
 
     return 0;
 }

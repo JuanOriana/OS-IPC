@@ -1,7 +1,7 @@
 CC=gcc
 GCCFLAGS = -g -Wall -std=c99
 GCCLIBS = -lrt -lpthread
-EXT_FILES = 
+EXT_FILES =  resourcesADT.c
 APP = app view slave
 
 
