@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -15,9 +17,8 @@ int main(int argc, char const *argv[])
     setvbuf(stdout, NULL, _IONBF, 0);
     char *path = NULL;
     size_t len = 0;
-    ssize_t lineSize = 0;
 
-    while ((lineSize = getline(&path, &len, stdin)) > 0)
+    while ((getline(&path, &len, stdin)) > 0)
     {
         if (strcmp(path, "") == 0)
             return 0;

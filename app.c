@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _XOPEN_SOURCE 500 //ftruncate warning
 
 #include <stdio.h>
@@ -52,7 +54,6 @@ int main(int argc, char const *argv[])
 
     int fileCount = argc - 1;
     char *shmBase = initShMem(MAX_OUTPUT_SIZE * fileCount);
-
     sem_t *mutexSem, *fullSem;
 
     if ((mutexSem = sem_open(SEM_MUTEX_NAME, O_CREAT | O_EXCL, 0660, 1)) == SEM_FAILED)

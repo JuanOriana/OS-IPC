@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #define _XOPEN_SOURCE 500
 
 #include <sys/shm.h>
@@ -10,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include "resourcesADT.h"
 
 #define SHMEM_PATH "/shmemBuffer"
 #define SEM_MUTEX_NAME "/sem-mutex"
@@ -30,26 +33,19 @@ int main(int argc, char const *argv[])
     }
     else if (argc == 1)
     {
-        scanf("%d", &fileCount);
+        if (scanf("%10d", &fileCount) != 1)
+        {
+            perror("scanf");
+            exit(EXIT_FAILURE);
+        }
+        printf("%d\n", fileCount);
     }
 
-    sem_t *mutexSem, *fullSem;
+    ResourcesPtr resources = resourcesOpen(fileCount * MAX_OUTPUT_SIZE, SHMEM_PATH, SEM_MUTEX_NAME, SEM_FULL_NAME);
+    sem_t *fullSem = getFull(resources);
+    sem_t *mutexSem = getMutex(resources);
+    char *shmBase = getShmBase(resources);
 
-    if ((mutexSem = sem_open(SEM_MUTEX_NAME, 0, 0660, 1)) == SEM_FAILED)
-    {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
-
-    if ((fullSem = sem_open(SEM_FULL_NAME, 0, 0660, 0)) == SEM_FAILED)
-    {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
-
-    //CATCH ERRORS!!
-    int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
-    char *shmBase = mmap(NULL, MAX_OUTPUT_SIZE * fileCount + sizeof(long), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
     int i = 0;
 
     while (1)
@@ -71,18 +67,7 @@ int main(int argc, char const *argv[])
         i++;
     }
 
-    close(shmFd);
+    resourcesClose(resources);
 
-    if (sem_close(mutexSem) < 0)
-    {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
-
-    if (sem_close(fullSem) < 0)
-    {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
     return 0;
 }
