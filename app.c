@@ -42,6 +42,7 @@ void sendBatches(const char **files, int childCount, int batchSize, int pipes[][
 
 int main(int argc, char const *argv[])
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
 
     if (argc < 2)
     {
@@ -66,8 +67,9 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    sleep(5);
+    sleep(1);
     printf("%d\n", fileCount);
+    fflush(stdin);
 
     // 2 pipes per child
     int pipes[CHILD_COUNT][2][2];
@@ -146,7 +148,6 @@ int main(int argc, char const *argv[])
         errorHandler("munmap");
     }
 
-    // CAMBIAR
     if (shm_unlink(SHMEM_PATH) < 0)
     {
         perror("shm_unlink");

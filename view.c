@@ -31,7 +31,6 @@ int main(int argc, char const *argv[])
     else if (argc == 1)
     {
         scanf("%d", &fileCount);
-        printf("%d\n", fileCount);
     }
 
     sem_t *mutexSem, *fullSem;
@@ -74,19 +73,13 @@ int main(int argc, char const *argv[])
 
     close(shmFd);
 
-    if (shm_unlink(SHMEM_PATH) < 0)
-    {
-        perror("shm_unlink");
-        exit(EXIT_FAILURE);
-    }
-
-    if (sem_unlink(SEM_MUTEX_NAME) < 0)
+    if (sem_close(mutexSem) < 0)
     {
         perror("sem_unlink");
         exit(EXIT_FAILURE);
     }
 
-    if (sem_unlink(SEM_FULL_NAME) < 0)
+    if (sem_close(fullSem) < 0)
     {
         perror("sem_unlink");
         exit(EXIT_FAILURE);
