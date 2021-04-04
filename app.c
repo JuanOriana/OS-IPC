@@ -78,6 +78,11 @@ int main(int argc, char const *argv[])
     int readSolves = 0;
     //Batches have to be of at least size 1
     int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
+    FILE* answersFile = fopen("answers.txt","w");
+     if (answersFile == NULL)
+    {
+        errorHandler("fopen");
+    }
 
     //Loading initial batches
     sendBatches(argv, childCount, batchSize, pipes, &currIdx);
@@ -125,6 +130,8 @@ int main(int argc, char const *argv[])
                         sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
                         sem_post(mutexSem);
                         sem_post(fullSem);
+                        fprintf(answersFile,"%s\n",token);
+
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -132,6 +139,8 @@ int main(int argc, char const *argv[])
             }
         }
     }
+
+    fclose(answersFile);
 
     waitAll(childIDs, childCount);
 
@@ -190,35 +199,6 @@ int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDE
     }
 
     return 0;
-}
-
-char *initShMem(int shmSize)
-{
-    int shmFd = shm_open(SHMEM_PATH, O_CREAT | O_RDWR | O_EXCL, S_IWUSR | S_IRUSR);
-    if (shmFd < 0)
-    {
-        errorHandler("shm_open");
-    }
-
-    if (ftruncate(shmFd, shmSize + sizeof(long)) < 0)
-    {
-        errorHandler("ftruncate");
-    }
-
-    char *shmBase = mmap(NULL, shmSize + sizeof(long), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
-
-    if (shmBase == MAP_FAILED)
-    {
-        errorHandler("mmap");
-    }
-    //  FD no longer needed to be open after mmap
-    if ((close(shmFd)) < 0)
-    {
-        errorHandler("close");
-    }
-    *(long *)shmBase = 0;
-
-    return shmBase;
 }
 
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
