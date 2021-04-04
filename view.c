@@ -18,7 +18,7 @@
 
 int main(int argc, char const *argv[])
 {
-    int fileCount;
+    int fileCount = 0 ;
     if (argc > 2)
     {
         fprintf(stderr, "Usage: %s <fileCount>\n", argv[0]);
