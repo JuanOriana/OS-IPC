@@ -101,9 +101,9 @@ int main(int argc, char const *argv[])
 
         for (int i = 0; i < childCount; i++)
         {
-            char str[BUFF_SIZE] = {0};
             if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
             {
+                char str[BUFF_SIZE] = {0};
                 if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, BUFF_SIZE) == 0)
                 {
                     closedPipes[i][READ_END] = 1;
