@@ -7,8 +7,8 @@
 #include <string.h>
 #include <libgen.h>
 #include <unistd.h>
-#define BUFF_SIZE 1024
-#define MAX_FILE_LENGTH 4096
+#include "consts.h"
+#include "errorHandling.h"
 
 void solve(char *file);
 
@@ -20,47 +20,40 @@ int main(int argc, char const *argv[])
 
     while ((getline(&path, &len, stdin)) > 0)
     {
-        if (strcmp(path, "") == 0)
-            return 0;
-
-        path[strcspn(path, "\n")] = 0; //Clearing file path ;
+        path[strcspn(path, "\n")] = 0; // Removing /n
         solve(path);
-
     }
+
     free(path);
     return 0;
 }
 
 void solve(char *file)
 {
-    char command[MAX_FILE_LENGTH];
-    char buff[MAX_FILE_LENGTH];
+    char command[BUFF_SIZE];
+    char buff[MAX_OUTPUT_SIZE];
     int retValue;
 
     retValue = sprintf(command, "minisat %s | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\\n\" \"\t\" | tr -d \" \t\"", file);
     if (retValue < 0)
     {
-        perror("sprintf");
-        exit(EXIT_FAILURE);
+        errorHandler("sprintf");
     }
 
     FILE *stream = popen(command, "r");
     if (stream == NULL)
     {
-        perror("popen");
-        exit(EXIT_FAILURE);
+        errorHandler("popen");
     }
 
-    if (fgets(buff, MAX_FILE_LENGTH, stream) == NULL)
+    if (fgets(buff, MAX_OUTPUT_SIZE, stream) == NULL)
     {
-        perror("fgets");
-        exit(EXIT_FAILURE);
+        errorHandler("fgets");
     }
 
     if (pclose(stream) < 0)
     {
-        perror("pclose");
-        exit(EXIT_FAILURE);
+        errorHandler("pclose");
     }
 
     int variables, clauses;
@@ -69,8 +62,7 @@ void solve(char *file)
 
     if (sscanf(buff, "Numberofvariables:%10dNumberofclauses:%10dCPUtime:%10fs%13s", &variables, &clauses, &cpuTime, state) == EOF)
     {
-        perror("sscanf");
-        exit(EXIT_FAILURE);
+        errorHandler("sscanf");
     }
 
     printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
