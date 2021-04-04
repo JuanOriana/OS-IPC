@@ -381,3 +381,46 @@ exit
 ls
 exit
 exit
+cd root
+make clean; make all; clear
+./app ./folder/* | ./view
+ps
+apt-get install minisat
+make clean; make all; clear
+./app ./folder/* | ./view
+./app ./folder/* | ./view
+cd ../../
+ls
+cd dev/shm
+ls
+rm *
+cd ../../
+ls
+cd root
+./app ./folder/* | ./view
+clear
+ps
+./app ./folder/* | ./view
+clear
+make clean; make all; clear
+./app ./folder/* | ./view
+strace ./app ./folder/* | ./view
+strace ./app ./folder/* | ./view
+clear
+make clean; make all; clear
+make clean; make all; 
+make clean; make all; 
+strace ./app ./folder/* | ./view
+strace ./app ./folder/* | ./view
+cd root
+apt-get install minisat
+clear
+make clean; make all; 
+strace ./app ./folder/* | ./view
+make clean; make all; 
+clear
+./app ./folder/* | ./view
+./app ./folder/* | ./view
+strace ./app ./folder/* | ./view
+docker ps
+exit

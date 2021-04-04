@@ -65,6 +65,6 @@ void solve(char *file)
         errorHandler("sscanf");
     }
 
-    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,
+    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%fs %s\n", getpid(), basename(file), variables,
            clauses, cpuTime, state);
 }

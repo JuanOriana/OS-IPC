@@ -6,5 +6,6 @@
 #define SEM_MUTEX_NAME "/sem-mutex"
 #define SEM_FULL_NAME "/sem-full-count"
 #define BUFF_SIZE 1024
+#define ERROR_MARGIN 10
 
 #endif
