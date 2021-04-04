@@ -30,8 +30,8 @@ int main(int argc, char const *argv[])
 
 void solve(char *file)
 {
-    char command[BUFF_SIZE];
-    char buff[MAX_OUTPUT_SIZE];
+    char command[BUFF_SIZE] = {0};
+    char buff[MAX_OUTPUT_SIZE] = {0};
     int retValue;
 
     retValue = sprintf(command, "minisat %s | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\\n\" \"\t\" | tr -d \" \t\"", file);
@@ -58,7 +58,7 @@ void solve(char *file)
 
     int variables, clauses;
     float cpuTime;
-    char state[14];
+    char state[14] = {0};
 
     if (sscanf(buff, "Numberofvariables:%10dNumberofclauses:%10dCPUtime:%10fs%13s", &variables, &clauses, &cpuTime, state) == EOF)
     {

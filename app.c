@@ -91,7 +91,6 @@ int main(int argc, char const *argv[])
 
     while (readSolves < fileCount)
     {
-        char str[BUFF_SIZE] = {0};
         fd_set readSet;
         buildReadSet(&readSet, pipes, closedPipes, childCount);
 
@@ -102,6 +101,7 @@ int main(int argc, char const *argv[])
 
         for (int i = 0; i < childCount; i++)
         {
+            char str[BUFF_SIZE] = {0};
             if (FD_ISSET(pipes[i][SLAVE_TO_MASTER][READ_END], &readSet))
             {
                 if (read(pipes[i][SLAVE_TO_MASTER][READ_END], str, BUFF_SIZE) == 0)
@@ -114,11 +114,6 @@ int main(int argc, char const *argv[])
                     char *token = strtok(str, "\n");
                     while (token != NULL)
                     {
-                        // Ignore irrelevant inputs
-                        if (strlen(token) < ERROR_MARGIN)
-                        {
-                            break;
-                        }
                         if (currIdx < argc)
                         {
                             sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
