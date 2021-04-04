@@ -29,6 +29,13 @@ ResourcesPtr resourcesInit(int shmSize, char *shmPath, char *mutexPath, char *fu
     resources->mutexPath = mutexPath;
     resources->fullPath = fullPath;
 
+    // NOTE: This unlinks may return with an ENOENT error if the files were previosuly created and not unlinked
+    // However, its the only way to make sure that we will not open an unwanted file
+    // and Alejo told us it was reasonable.
+    shm_unlink(resources->shmPath);
+    sem_unlink(resources->fullPath);
+    sem_unlink(resources->mutexPath);
+
     //Sem opens with creation flag
     if ((resources->mutexSem = sem_open(mutexPath, O_CREAT | O_EXCL, 0660, 1)) == SEM_FAILED)
     {
