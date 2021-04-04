@@ -76,13 +76,14 @@ int main(int argc, char const *argv[])
     initPipes(pipes, childCount, &maxFd);
     initForks(childIDs, childCount, pipes);
 
-    //Batches have to be of at least size 1
-    int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
-    FILE* answersFile = fopen("answers.txt","w");
-     if (answersFile == NULL)
+    FILE *answersFile = fopen("answers.txt", "w");
+    if (answersFile == NULL)
     {
         errorHandler("fopen");
     }
+
+    //Batches have to be of at least size 1
+    int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
 
     //Loading initial batches
     sendBatches(argv, childCount, batchSize, pipes, &currIdx);
@@ -134,7 +135,7 @@ int main(int argc, char const *argv[])
                         sem_post(mutexSem);
                         sem_post(fullSem);
 
-                        fprintf(answersFile,"%s\n",token);
+                        fprintf(answersFile, "%s\n", token);
 
                         token = strtok(NULL, "\n");
                         readSolves++;
