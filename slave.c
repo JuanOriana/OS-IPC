@@ -7,8 +7,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <unistd.h>
-#define BUFF_SIZE 1024
-#define MAX_FILE_LENGTH 4096
+#include "consts.h"
 
 void solve(char *file);
 
@@ -20,21 +19,18 @@ int main(int argc, char const *argv[])
 
     while ((getline(&path, &len, stdin)) > 0)
     {
-        if (strcmp(path, "") == 0)
-            return 0;
-
-        path[strcspn(path, "\n")] = 0; //Clearing file path ;
+        path[strcspn(path, "\n")] = 0; // Removing /n
         solve(path);
-
     }
+
     free(path);
     return 0;
 }
 
 void solve(char *file)
 {
-    char command[MAX_FILE_LENGTH];
-    char buff[MAX_FILE_LENGTH];
+    char command[BUFF_SIZE];
+    char buff[MAX_OUTPUT_SIZE];
     int retValue;
 
     retValue = sprintf(command, "minisat %s | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\\n\" \"\t\" | tr -d \" \t\"", file);
@@ -51,7 +47,7 @@ void solve(char *file)
         exit(EXIT_FAILURE);
     }
 
-    if (fgets(buff, MAX_FILE_LENGTH, stream) == NULL)
+    if (fgets(buff, MAX_OUTPUT_SIZE, stream) == NULL)
     {
         perror("fgets");
         exit(EXIT_FAILURE);

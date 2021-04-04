@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include "resourcesADT.h"
+#include "consts.h"
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -23,12 +24,7 @@
 #define WRITE_END 1
 #define SLAVE_TO_MASTER 0
 #define MASTER_TO_SLAVE 1
-#define MAX_OUTPUT_SIZE 4096
-#define SHMEM_PATH "/shmemBuffer"
-#define SEM_MUTEX_NAME "/sem-mutex"
-#define SEM_FULL_NAME "/sem-full-count"
 #define BATCH_PERC 0.2
-#define BUFF_SIZE 1024
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -54,13 +50,16 @@ int main(int argc, char const *argv[])
     }
 
     int fileCount = argc - 1;
+    int currIdx = 1;
+    int readSolves = 0;
 
+    // Resources inits
     ResourcesPtr resources = resourcesInit(fileCount * MAX_OUTPUT_SIZE, SHMEM_PATH, SEM_MUTEX_NAME, SEM_FULL_NAME);
     sem_t *fullSem = getFull(resources);
     sem_t *mutexSem = getMutex(resources);
     char *shmBase = getShmBase(resources);
 
-    sleep(1);
+    sleep(2);
     printf("%d\n", fileCount);
 
     // 2 pipes per child
@@ -68,14 +67,14 @@ int main(int argc, char const *argv[])
     pid_t childIDs[CHILD_COUNT];
     char closedPipes[CHILD_COUNT][2] = {{0}};
 
-    int maxFd = -1;
+    // Can not have more childs than files
     int childCount = MIN(CHILD_COUNT, fileCount);
 
+    // Pipe/ forks inits
+    int maxFd = -1;
     initPipes(pipes, childCount, &maxFd);
     initForks(childIDs, childCount, pipes);
 
-    int currIdx = 1;
-    int readSolves = 0;
     //Batches have to be of at least size 1
     int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
 
@@ -114,17 +113,21 @@ int main(int argc, char const *argv[])
                         }
                         else
                         {
+                            // Only close if it hasnt been previously closed
                             if (closedPipes[i][WRITE_END] == 0)
                             {
                                 close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
                                 closedPipes[i][WRITE_END] = 1;
                             }
                         }
+
+                        // Shm access
                         sem_wait(mutexSem);
                         (*(long *)shmBase)++;
                         sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
                         sem_post(mutexSem);
                         sem_post(fullSem);
+
                         token = strtok(NULL, "\n");
                         readSolves++;
                     }
@@ -134,7 +137,6 @@ int main(int argc, char const *argv[])
     }
 
     waitAll(childIDs, childCount);
-
     resourcesUnlink(resources);
 
     return 0;

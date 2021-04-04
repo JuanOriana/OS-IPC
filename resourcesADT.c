@@ -128,8 +128,19 @@ ResourcesPtr resourcesOpen(int shmSize, char *shmPath, char *mutexPath, char *fu
     //CATCH ERRORS!!
     //Shm open WITHOUT creation flag
     resources->shmFd = shm_open(resources->shmPath, O_RDWR, S_IWUSR | S_IRUSR);
+
+    if (resources->shmFd < 0)
+    {
+        errorHand("shm_open");
+    }
+
     //Mapping
     resources->shmBase = mmap(NULL, resources->shmSize + sizeof(long), PROT_READ | PROT_WRITE, MAP_SHARED, resources->shmFd, 0);
+
+    if (resources->shmBase == MAP_FAILED)
+    {
+        errorHand("mmap");
+    }
 
     return resources;
 }

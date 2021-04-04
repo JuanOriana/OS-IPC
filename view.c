@@ -13,11 +13,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include "resourcesADT.h"
-
-#define SHMEM_PATH "/shmemBuffer"
-#define SEM_MUTEX_NAME "/sem-mutex"
-#define SEM_FULL_NAME "/sem-full-count"
-#define MAX_OUTPUT_SIZE 4096
+#include "consts.h"
 
 int main(int argc, char const *argv[])
 {
@@ -33,12 +29,12 @@ int main(int argc, char const *argv[])
     }
     else if (argc == 1)
     {
+        // Avoiding ridiculously large numbers as input
         if (scanf("%10d", &fileCount) != 1)
         {
             perror("scanf");
             exit(EXIT_FAILURE);
         }
-        printf("%d\n", fileCount);
     }
 
     ResourcesPtr resources = resourcesOpen(fileCount * MAX_OUTPUT_SIZE, SHMEM_PATH, SEM_MUTEX_NAME, SEM_FULL_NAME);
@@ -48,12 +44,8 @@ int main(int argc, char const *argv[])
 
     int i = 0;
 
-    while (1)
+    while (i < fileCount)
     {
-        if (i == fileCount)
-        {
-            break;
-        }
         sem_wait(fullSem);
         sem_wait(mutexSem);
         if (strcmp(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "DONE") == 0)
