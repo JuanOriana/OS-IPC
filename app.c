@@ -16,6 +16,7 @@
 #include <semaphore.h>
 #include "resourcesADT.h"
 #include "consts.h"
+#include "errorHandling.h"
 
 #define CHILD_COUNT 3
 #define PIPES_PER_CHILD 2
@@ -275,11 +276,6 @@ void sendFile(int fd, const char *file, int fileLen)
     }
 }
 
-void errorHandler(char *funcName)
-{
-    perror(funcName);
-    exit(EXIT_FAILURE);
-}
 void sendBatches(const char **files, int childCount, int batchSize, int pipes[][2][2], int *currIdx)
 {
     for (int i = 0; i < childCount; i++)

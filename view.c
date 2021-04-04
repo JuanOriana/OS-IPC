@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include "resourcesADT.h"
 #include "consts.h"
+#include "errorHandling.h"
 
 int main(int argc, char const *argv[])
 {
@@ -32,8 +33,7 @@ int main(int argc, char const *argv[])
         // Avoiding ridiculously large numbers as input
         if (scanf("%10d", &fileCount) != 1)
         {
-            perror("scanf");
-            exit(EXIT_FAILURE);
+            errorHandler("scanf");
         }
     }
 

@@ -8,6 +8,7 @@
 #include <libgen.h>
 #include <unistd.h>
 #include "consts.h"
+#include "errorHandling.h"
 
 void solve(char *file);
 
@@ -36,27 +37,23 @@ void solve(char *file)
     retValue = sprintf(command, "minisat %s | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\\n\" \"\t\" | tr -d \" \t\"", file);
     if (retValue < 0)
     {
-        perror("sprintf");
-        exit(EXIT_FAILURE);
+        errorHandler("sprintf");
     }
 
     FILE *stream = popen(command, "r");
     if (stream == NULL)
     {
-        perror("popen");
-        exit(EXIT_FAILURE);
+        errorHandler("popen");
     }
 
     if (fgets(buff, MAX_OUTPUT_SIZE, stream) == NULL)
     {
-        perror("fgets");
-        exit(EXIT_FAILURE);
+        errorHandler("fgets");
     }
 
     if (pclose(stream) < 0)
     {
-        perror("pclose");
-        exit(EXIT_FAILURE);
+        errorHandler("pclose");
     }
 
     int variables, clauses;
@@ -65,8 +62,7 @@ void solve(char *file)
 
     if (sscanf(buff, "Numberofvariables:%10dNumberofclauses:%10dCPUtime:%10fs%13s", &variables, &clauses, &cpuTime, state) == EOF)
     {
-        perror("sscanf");
-        exit(EXIT_FAILURE);
+        errorHandler("sscanf");
     }
 
     printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%f %s\n", getpid(), basename(file), variables,

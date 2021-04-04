@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include "errorHandling.h"
 
 struct Resources
 {
@@ -19,12 +20,6 @@ struct Resources
     int shmSize, shmFd;
     char *shmPath, *mutexPath, *fullPath;
 };
-
-void errorHand(char *funcName)
-{
-    perror(funcName);
-    exit(EXIT_FAILURE);
-}
 
 ResourcesPtr resourcesInit(int shmSize, char *shmPath, char *mutexPath, char *fullPath)
 {
@@ -37,14 +32,12 @@ ResourcesPtr resourcesInit(int shmSize, char *shmPath, char *mutexPath, char *fu
     //Sem opens with creation flag
     if ((resources->mutexSem = sem_open(mutexPath, O_CREAT | O_EXCL, 0660, 1)) == SEM_FAILED)
     {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_open");
     }
 
     if ((resources->fullSem = sem_open(fullPath, O_CREAT | O_EXCL, 0660, 0)) == SEM_FAILED)
     {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_open");
     }
 
     //Shm open with creation flag
@@ -52,13 +45,13 @@ ResourcesPtr resourcesInit(int shmSize, char *shmPath, char *mutexPath, char *fu
 
     if (resources->shmFd < 0)
     {
-        errorHand("shm_open");
+        errorHandler("shm_open");
     }
 
     // Size defs
     if (ftruncate(resources->shmFd, shmSize + sizeof(long)) < 0)
     {
-        errorHand("ftruncate");
+        errorHandler("ftruncate");
     }
 
     // Mapping
@@ -66,7 +59,7 @@ ResourcesPtr resourcesInit(int shmSize, char *shmPath, char *mutexPath, char *fu
 
     if (shmBase == MAP_FAILED)
     {
-        errorHand("mmap");
+        errorHandler("mmap");
     }
 
     *(long *)shmBase = 0;
@@ -80,25 +73,22 @@ void resourcesUnlink(ResourcesPtr resources)
 {
     if (munmap(resources->shmBase, resources->shmSize + sizeof(long)) < 0)
     {
-        errorHand("munmap");
+        errorHandler("munmap");
     }
 
     if (shm_unlink(resources->shmPath) < 0)
     {
-        perror("shm_unlink");
-        exit(EXIT_FAILURE);
+        errorHandler("shm_unlink");
     }
 
     if (sem_unlink(resources->fullPath) < 0)
     {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_unlink");
     }
 
     if (sem_unlink(resources->mutexPath) < 0)
     {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_unlink");
     }
 
     free(resources);
@@ -115,14 +105,12 @@ ResourcesPtr resourcesOpen(int shmSize, char *shmPath, char *mutexPath, char *fu
     //Sem opens WITHOUT creation flag
     if ((resources->mutexSem = sem_open(mutexPath, 0, 0660, 1)) == SEM_FAILED)
     {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_open");
     }
 
     if ((resources->fullSem = sem_open(fullPath, 0, 0660, 0)) == SEM_FAILED)
     {
-        perror("sem_open");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_open");
     }
 
     //CATCH ERRORS!!
@@ -131,7 +119,7 @@ ResourcesPtr resourcesOpen(int shmSize, char *shmPath, char *mutexPath, char *fu
 
     if (resources->shmFd < 0)
     {
-        errorHand("shm_open");
+        errorHandler("shm_open");
     }
 
     //Mapping
@@ -139,7 +127,7 @@ ResourcesPtr resourcesOpen(int shmSize, char *shmPath, char *mutexPath, char *fu
 
     if (resources->shmBase == MAP_FAILED)
     {
-        errorHand("mmap");
+        errorHandler("mmap");
     }
 
     return resources;
@@ -150,24 +138,22 @@ void resourcesClose(ResourcesPtr resources)
 
     if (munmap(resources->shmBase, resources->shmSize + sizeof(long)) < 0)
     {
-        errorHand("munmap");
+        errorHandler("munmap");
     }
 
     if (sem_close(resources->mutexSem) < 0)
     {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_unlink");
     }
 
     if (sem_close(resources->fullSem) < 0)
     {
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
+        errorHandler("sem_unlink");
     }
 
     if ((close(resources->shmFd)) < 0)
     {
-        errorHand("close");
+        errorHandler("close");
     }
 
     free(resources);
