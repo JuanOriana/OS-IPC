@@ -76,14 +76,15 @@ int main(int argc, char const *argv[])
     initPipes(pipes, childCount, &maxFd);
     initForks(childIDs, childCount, pipes);
 
+    //Batches have to be of at least size 1
+    int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
+
     FILE *answersFile = fopen("answers.txt", "w");
+
     if (answersFile == NULL)
     {
         errorHandler("fopen");
     }
-
-    //Batches have to be of at least size 1
-    int batchSize = MAX(fileCount * BATCH_PERC / childCount, 1);
 
     //Loading initial batches
     sendBatches(argv, childCount, batchSize, pipes, &currIdx);
@@ -113,6 +114,11 @@ int main(int argc, char const *argv[])
                     char *token = strtok(str, "\n");
                     while (token != NULL)
                     {
+                        // Ignore irrelevant inputs
+                        if (strlen(token) < ERROR_MARGIN)
+                        {
+                            break;
+                        }
                         if (currIdx < argc)
                         {
                             sendFile(pipes[i][MASTER_TO_SLAVE][WRITE_END], argv[currIdx], strlen(argv[currIdx]));
