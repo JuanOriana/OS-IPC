@@ -33,7 +33,6 @@
 void errorHandler(char *funcName);
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
-char *initShMem(int shmSize);
 int waitAll(int *childIDs, int childCount);
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount);
