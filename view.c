@@ -18,7 +18,7 @@
 
 int main(int argc, char const *argv[])
 {
-    int fileCount = 0 ;
+    int fileCount = 0;
     if (argc > 2)
     {
         fprintf(stderr, "Usage: %s <fileCount>\n", argv[0]);
@@ -48,8 +48,8 @@ int main(int argc, char const *argv[])
     {
         sem_wait(fullSem);
         sem_wait(mutexSem);
-        printf("%s", shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE);
         (*(long *)shmBase)--;
+        printf("%s", shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE);
         sem_post(mutexSem);
         i++;
     }

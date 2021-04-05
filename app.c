@@ -45,7 +45,7 @@ int main(int argc, char const *argv[])
     sem_t *mutexSem = getMutex(resources);
     char *shmBase = getShmBase(resources);
 
-    sleep(2);
+    sleep(5);
     printf("%d\n", fileCount);
 
     // 2 pipes per child
@@ -116,8 +116,8 @@ int main(int argc, char const *argv[])
 
                         // Shm access
                         sem_wait(mutexSem);
-                        (*(long *)shmBase)++;
                         sprintf(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "%s\n", token);
+                        (*(long *)shmBase)++;
                         sem_post(mutexSem);
                         sem_post(fullSem);
 
