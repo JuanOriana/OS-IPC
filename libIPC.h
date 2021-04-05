@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "errorHandling.h"
+
 
 
 int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);

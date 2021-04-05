@@ -14,7 +14,6 @@
 #include "resourcesADT.h"
 #include "consts.h"
 #include "libIPC.h"
-#include "errorHandling.h"
 
 #define CHILD_COUNT 3
 #define BATCH_PERC 0.2
