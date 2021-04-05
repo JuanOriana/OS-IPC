@@ -80,3 +80,14 @@ void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int chi
     }
 }
 
+int waitAll(int *childIDs, int childCount)
+{
+    for (int i = 0; i < childCount; i++)
+    {
+        if (waitpid(childIDs[i], NULL, 0) < 0)
+        {
+            errorHandler("waitpid");
+        }
+    }
+    return 0;
+}

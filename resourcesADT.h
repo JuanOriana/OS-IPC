@@ -2,6 +2,13 @@
 #define RESOURCES_H_
 
 #include <semaphore.h>
+#include <sys/shm.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include "errorHandling.h"
 
 typedef struct Resources *ResourcesPtr;
 

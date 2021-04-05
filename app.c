@@ -3,14 +3,7 @@
 #define _XOPEN_SOURCE 500 //ftruncate warning
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/shm.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <semaphore.h>
 #include "resourcesADT.h"
 #include "consts.h"
 #include "libIPC.h"
@@ -21,7 +14,6 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-int waitAll(int *childIDs, int childCount);
 void sendFile(int fd, const char *file, int fileLen);
 void sendBatches(const char **files, int childCount, int batchSize, int pipes[][2][2], int *currIdx);
 
@@ -106,7 +98,7 @@ int main(int argc, char const *argv[])
                         }
                         else
                         {
-                            // Only close if it hasnt been previously closed
+                            // Only close if it hasn't been previously closed
                             if (closedPipes[i][WRITE_END] == 0)
                             {
                                 close(pipes[i][MASTER_TO_SLAVE][WRITE_END]);
@@ -136,18 +128,6 @@ int main(int argc, char const *argv[])
     waitAll(childIDs, childCount);
     resourcesUnlink(resources);
 
-    return 0;
-}
-
-int waitAll(int *childIDs, int childCount)
-{
-    for (int i = 0; i < childCount; i++)
-    {
-        if (waitpid(childIDs[i], NULL, 0) < 0)
-        {
-            errorHandler("waitpid");
-        }
-    }
     return 0;
 }
 

@@ -60,11 +60,11 @@ void solve(char *file)
     float cpuTime;
     char state[14] = {0};
 
-    if (sscanf(buff, "Numberofvariables:%10dNumberofclauses:%10dCPUtime:%10fs%14s", &variables, &clauses, &cpuTime, state) == EOF)
+    if (sscanf(buff, "Numberofvariables:%10dNumberofclauses:%10dCPUtime:%10fs%13s", &variables, &clauses, &cpuTime, state) == EOF)
     {
         errorHandler("sscanf");
     }
 
-    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%fs %s\n", getpid(), basename(file), variables,
+    printf("PID:%d Filename:%s Numberofvariables:%d Numberofclauses:%d CPUtime:%fs %s", getpid(), basename(file), variables,
            clauses, cpuTime, state);
 }

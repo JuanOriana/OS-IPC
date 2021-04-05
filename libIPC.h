@@ -10,7 +10,7 @@
 
 #include <sys/select.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include "errorHandling.h"
 
@@ -20,6 +20,8 @@ int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *
 int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
 void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount);
+int waitAll(int *childIDs, int childCount);
+
 
 
 

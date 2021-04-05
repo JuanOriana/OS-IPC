@@ -2,16 +2,7 @@
 #define _XOPEN_SOURCE 500
 
 #include "resourcesADT.h"
-#include <sys/shm.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include "errorHandling.h"
+
 
 struct Resources
 {
