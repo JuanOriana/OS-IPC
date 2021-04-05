@@ -48,11 +48,6 @@ int main(int argc, char const *argv[])
     {
         sem_wait(fullSem);
         sem_wait(mutexSem);
-        if (strcmp(shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE, "DONE") == 0)
-        {
-            sem_post(mutexSem);
-            exit(0);
-        }
         printf("%s", shmBase + sizeof(long) + (*(long *)shmBase) * MAX_OUTPUT_SIZE);
         (*(long *)shmBase)--;
         sem_post(mutexSem);
