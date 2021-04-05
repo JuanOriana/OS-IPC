@@ -5,38 +5,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/shm.h>
-#include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/select.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include "resourcesADT.h"
 #include "consts.h"
+#include "libIPC.h"
 #include "errorHandling.h"
 
 #define CHILD_COUNT 3
-#define PIPES_PER_CHILD 2
-#define FILEDESC_QTY 2
-#define READ_END 0
-#define WRITE_END 1
-#define SLAVE_TO_MASTER 0
-#define MASTER_TO_SLAVE 1
 #define BATCH_PERC 0.2
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-void errorHandler(char *funcName);
-int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd);
-int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
-char *initShMem(int shmSize);
 int waitAll(int *childIDs, int childCount);
-int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY]);
-void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount);
 void sendFile(int fd, const char *file, int fileLen);
 void sendBatches(const char **files, int childCount, int batchSize, int pipes[][2][2], int *currIdx);
 
@@ -154,73 +140,6 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-int initPipes(int pipeMat[][PIPES_PER_CHILD][FILEDESC_QTY], int pipeCount, int *maxFd)
-{
-
-    for (int i = 0; i < pipeCount; i++)
-    {
-        for (int j = 0; j < PIPES_PER_CHILD; j++)
-        {
-            if (pipe(pipeMat[i][j]) < 0)
-            {
-                errorHandler("pipe");
-            }
-
-            if (pipeMat[i][j][READ_END] > *maxFd)
-            {
-                *maxFd = pipeMat[i][j][READ_END];
-            }
-        }
-    }
-    return 0;
-}
-
-int initForks(int *childIDs, int childCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
-{
-
-    char *const *execParam = NULL;
-
-    for (int i = 0; i < childCount; i++)
-    {
-        if ((childIDs[i] = fork()) < 0)
-        {
-            errorHandler("fork");
-        }
-        else if (childIDs[i] == 0)
-        {
-            dup2(pipes[i][SLAVE_TO_MASTER][WRITE_END], STDOUT_FILENO);
-            dup2(pipes[i][MASTER_TO_SLAVE][READ_END], STDIN_FILENO);
-
-            closePipes(childCount, pipes);
-            execv("./slave", execParam);
-            errorHandler("execv");
-        }
-        else
-        {
-
-            close(pipes[i][SLAVE_TO_MASTER][WRITE_END]);
-            close(pipes[i][MASTER_TO_SLAVE][READ_END]);
-        }
-    }
-
-    return 0;
-}
-
-int closePipes(int pipeCount, int pipes[][PIPES_PER_CHILD][FILEDESC_QTY])
-{
-    for (int i = 0; i < pipeCount; i++)
-    {
-        for (int j = 0; j < PIPES_PER_CHILD; j++)
-        {
-            for (int k = 0; k < FILEDESC_QTY; k++)
-            {
-                close(pipes[i][j][k]);
-            }
-        }
-    }
-    return 0;
-}
-
 int waitAll(int *childIDs, int childCount)
 {
     for (int i = 0; i < childCount; i++)
@@ -231,18 +150,6 @@ int waitAll(int *childIDs, int childCount)
         }
     }
     return 0;
-}
-
-void buildReadSet(fd_set *set, int pipes[][2][2], char closedPipes[][2], int childCount)
-{
-    FD_ZERO(set);
-    for (int i = 0; i < childCount; i++)
-    {
-        if (!closedPipes[i][READ_END])
-        {
-            FD_SET(pipes[i][SLAVE_TO_MASTER][READ_END], set);
-        }
-    }
 }
 
 void sendFile(int fd, const char *file, int fileLen)
