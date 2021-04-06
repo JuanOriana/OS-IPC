@@ -1,5 +1,5 @@
 CC=gcc
-GCCFLAGS = -g -Wall -std=c99 -fsanitize=address
+GCCFLAGS = -g -Wall -std=c99 
 GCCLIBS = -lrt -lpthread
 EXT_FILES =  resourcesADT.c errorHandling.c libIPC.c
 APP = app view slave
